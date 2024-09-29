@@ -1,0 +1,77 @@
+﻿@page "/"
+
+
+@using Rolfin.Blazor.FluentValidation
+@rendermode InteractiveServer
+
+<PageTitle>Home</PageTitle>
+
+
+<EditForm FormName="formName" Model="_model" OnValidSubmit="submite">
+
+    <div style="display: flex; flex-direction: column; width: 50%; min-height: 300px; margin: auto;">
+
+        <FluentFormValidator Model="Model" Roles="roles" />
+
+        <InputText @bind-Value=_model.Name />
+        <ValidationMessage For="() => _model.Name" />
+
+        <InputText @bind-Value=_model.MiddleName />
+        <ValidationMessage For="() => _model.MiddleName" />
+
+        <InputNumber @bind-Value=_model.Number />
+        <ValidationMessage For="() => _model.Number" />
+
+        <InputCheckbox @bind-Value=_model.IsSelected />
+
+        <InputText @bind-Value=_model.Comment />
+        <ValidationMessage For="() => _model.Comment" />
+
+        <button type="submit">Save</button>
+
+    </div>
+
+</EditForm>
+
+
+
+@code{
+    Model _model = new();
+    List<Model> _items = new()
+    {
+        new() { Name = "florin", Number = 10 }    
+    };
+
+    FluentFormValidator<Model>? _validator { get; set; }
+
+    Action<ValidationBuilder<Model>> roles => (builder) =>
+    {
+        builder.RoleFor(x => x.Name).AddValidators(_items.Exists);
+        builder.RoleFor(x => x.Number).AddValidators(_items.Exists);
+        builder.RoleFor(x => x.MiddleName).NotNull();
+        builder.RoleIfFor(x => x.IsSelected, prop => prop.Comment).NotNullOrWhiteSpace();
+    };
+
+    void submite()
+    {
+
+    }
+
+
+    class Model
+    {
+        public Guid Id { get; set; }
+        public string? Name { get; set; }
+        public string? MiddleName { get; set; }
+        public bool IsSelected { get; set; }
+        public string Comment { get; set; }
+        public InnerModel InnerModel { get; set; }
+        public int Number { get; set; }
+    }
+
+    class InnerModel
+    {
+        public Guid Id { get; set; }
+        public string InnerName { get; set; }
+    }
+}
