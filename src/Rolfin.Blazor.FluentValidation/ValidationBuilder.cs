@@ -74,7 +74,7 @@ public class ValidationBuilder<T>
     }
 
 
-    void ExecutFilters(List<Func<FieldProperties, FluentValidationError>> filters, FieldIdentifier fieldIdentifier, object value, ValidationMessageStore store)
+    void ExecutFilters(List<Func<FieldProperties, ValidationError>> filters, FieldIdentifier fieldIdentifier, object value, ValidationMessageStore store)
     {
         foreach (var filter in filters)
         {

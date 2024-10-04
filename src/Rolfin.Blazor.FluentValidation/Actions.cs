@@ -2,17 +2,17 @@
 
 public class Actions
 {
-    internal List<Func<FieldProperties, FluentValidationError>> Filters = new();
+    internal List<Func<FieldProperties, ValidationError>> Filters = new();
 
 
-    public Actions AddFilter(Func<FieldProperties, FluentValidationError> filter)
+    public Actions AddFilter(Func<FieldProperties, ValidationError> filter)
     {
         Filters.Add(filter);
         return this;
     }
 
 
-    public Actions AddValidators(params Func<FieldProperties, FluentValidationError>[] validators)
+    public Actions AddValidators(params Func<FieldProperties, ValidationError>[] validators)
     {
         for(var i = 0; i <= validators.Length - 1; i++)
             Filters.Add(validators[i]);
@@ -51,7 +51,7 @@ public class Actions
 
 public static class ValidatorDefaults
 {
-    public static FluentValidationError Exists(this IList items, FieldProperties field)
+    public static ValidationError Exists(this IList items, FieldProperties field)
     {
         foreach (var item in items)
         {
