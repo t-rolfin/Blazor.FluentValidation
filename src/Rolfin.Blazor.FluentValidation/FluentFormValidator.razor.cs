@@ -33,10 +33,12 @@ public partial class FluentFormValidator<Model> : ComponentBase, IDisposable
         Context.OnFieldChanged += FieldChengedMethod;
     }
 
+
     void FieldChengedMethod(object sender, FieldChangedEventArgs e)
         => _builder.ValidateField(_store, (EditContext)sender, e.FieldIdentifier);
     void ValidationRequestedMethod(object sender, ValidationRequestedEventArgs e)
         => _builder.Validate(_store, (EditContext)sender);
+
 
     public void ChangeRoles(Action<ValidationBuilder<Model>> roles)
     {
@@ -48,6 +50,11 @@ public partial class FluentFormValidator<Model> : ComponentBase, IDisposable
     {
         var fieldIdentitifier = Context.Field(fieldName);
         _store.Add(fieldIdentitifier, ErrorMessage);
+    }
+    public void ClearErrorsFor(string fieldName)
+    {
+        var fieldIdentitifier = Context.Field(fieldName);
+        _store.Clear(fieldIdentitifier);
     }
 
 
