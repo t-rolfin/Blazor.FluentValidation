@@ -3,7 +3,7 @@
 public partial class FluentFormValidator<Model> : ComponentBase, IDisposable
 {
     ValidationMessageStore _store;
-    ValidationBuilder<Model> _builder = new();
+    ValidationBuilder<Model> _builder;
 
 
     [CascadingParameter] 
@@ -20,8 +20,11 @@ public partial class FluentFormValidator<Model> : ComponentBase, IDisposable
 
         _store ??= new ValidationMessageStore(Context);
 
-        if(Roles is not null)
+        if(Roles is not null && _builder is null)
+        {
+            _builder ??= new();
             Roles.Invoke(_builder);
+        }
 
         Context.OnValidationRequested -= ValidationRequestedMethod;
         Context.OnValidationRequested += ValidationRequestedMethod;
@@ -30,14 +33,14 @@ public partial class FluentFormValidator<Model> : ComponentBase, IDisposable
         Context.OnFieldChanged += FieldChengedMethod;
     }
 
-    private void FieldChengedMethod(object sender, FieldChangedEventArgs e)
+    void FieldChengedMethod(object sender, FieldChangedEventArgs e)
         => _builder.ValidateField(_store, (EditContext)sender, e.FieldIdentifier);
-
-    private void ValidationRequestedMethod(object sender, ValidationRequestedEventArgs e)
+    void ValidationRequestedMethod(object sender, ValidationRequestedEventArgs e)
         => _builder.Validate(_store, (EditContext)sender);
 
     public void ChangeRoles(Action<ValidationBuilder<Model>> roles)
     {
+        _store.Clear();
         _builder = new();
         roles.Invoke(_builder);
     }
@@ -46,6 +49,7 @@ public partial class FluentFormValidator<Model> : ComponentBase, IDisposable
         var fieldIdentitifier = Context.Field(fieldName);
         _store.Add(fieldIdentitifier, ErrorMessage);
     }
+
 
     public void Dispose()
     {
