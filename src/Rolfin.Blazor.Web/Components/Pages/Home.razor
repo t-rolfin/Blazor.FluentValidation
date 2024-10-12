@@ -6,12 +6,13 @@
 
 <PageTitle>Home</PageTitle>
 
+<button @onclick="changeValidationRoles" > Change </button>
 
 <EditForm FormName="formName" Model="_model" OnValidSubmit="submite">
 
     <div style="display: flex; flex-direction: column; width: 50%; min-height: 300px; margin: auto;">
 
-        <FluentFormValidator Model="Model" Roles="roles" />
+        <FluentFormValidator Model="Model" Roles="roles" @ref=_validator />
 
         <InputText @bind-Value=_model.Name />
         <ValidationMessage For="() => _model.Name" />
@@ -46,15 +47,25 @@
 
     Action<ValidationBuilder<Model>> roles => (builder) =>
     {
-        builder.RoleFor(x => x.Name).AddValidators(_items.Exists);
-        builder.RoleFor(x => x.Number).AddValidators(_items.Exists);
-        builder.RoleFor(x => x.MiddleName).NotNull();
-        builder.RoleIfFor(x => x.IsSelected, prop => prop.Comment).NotNullOrWhiteSpace();
+        builder.RolesFor(x => x.Name).AddValidators(_items.Exists).NotNullOrWhiteSpace();
+        builder.RolesFor(x => x.Number).AddValidators(_items.Exists).NotNullOrWhiteSpace();
+        builder.RolesFor(x => x.MiddleName).NotNull();
+        builder.RolesIfFor(x => x.IsSelected, prop => prop.Comment).NotNullOrWhiteSpace();
+        builder.RolesForRow(() => _model.List, x => x.Id, prop => prop.InnerName).NotNullOrWhiteSpace();
     };
 
     void submite()
     {
+    }
 
+    void changeValidationRoles()
+    {
+        _validator?.ChangeRoles(builder =>
+        {
+            builder.RolesFor(x => x.Number).AddValidators(_items.Exists);
+            builder.RolesFor(x => x.MiddleName).NotNull();
+            builder.RolesIfFor(x => x.IsSelected, prop => prop.Comment).NotNullOrWhiteSpace();
+        });
     }
 
 
@@ -67,6 +78,12 @@
         public string Comment { get; set; }
         public InnerModel InnerModel { get; set; }
         public int Number { get; set; }
+
+        public List<InnerModel> List { get; set; } = new() { 
+            new() { Id = Guid.NewGuid(), InnerName = "florin" },
+            new() { Id = Guid.NewGuid(), InnerName = "" },
+            new() { Id = Guid.NewGuid(), InnerName = "" },
+        };
     }
 
     class InnerModel

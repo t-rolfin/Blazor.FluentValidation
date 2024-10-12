@@ -34,10 +34,8 @@ public partial class FluentFormValidator<Model> : ComponentBase, IDisposable
     }
 
 
-    void FieldChengedMethod(object sender, FieldChangedEventArgs e)
-        => _builder.ValidateField(_store, (EditContext)sender, e.FieldIdentifier);
-    void ValidationRequestedMethod(object sender, ValidationRequestedEventArgs e)
-        => _builder.Validate(_store, (EditContext)sender);
+    void FieldChengedMethod(object sender, FieldChangedEventArgs e) => _builder.ValidateField(_store, (EditContext)sender, e.FieldIdentifier);
+    void ValidationRequestedMethod(object sender, ValidationRequestedEventArgs e) => _builder.Validate(_store, (EditContext)sender);
 
 
     public void ChangeRoles(Action<ValidationBuilder<Model>> roles)
