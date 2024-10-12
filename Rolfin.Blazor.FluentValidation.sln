@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rolfin.Blazor.FluentValidation", "src\Rolfin.Blazor.FluentValidation\Rolfin.Blazor.FluentValidation.csproj", "{4E0EDAA1-7604-45C8-8A8F-6581CBC7ED9B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rolfin.Blazor.Web", "src\Rolfin.Blazor.Web\Rolfin.Blazor.Web.csproj", "{DD30FDA6-82CE-4DE6-8765-563EE2CCBFD9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rolfin.Blazor.Web", "src\Rolfin.Blazor.Web\Rolfin.Blazor.Web.csproj", "{DD30FDA6-82CE-4DE6-8765-563EE2CCBFD9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

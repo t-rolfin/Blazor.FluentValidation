@@ -2,7 +2,7 @@
 
 static class Extensions
 {
-	public static Expression<Func<object, List<object>>> ToGeneric<T, V>(this Func<List<V>> property)
+	public static Expression<Func<object, List<object>>> ToDelegate<T, V>(this Func<List<V>> property)
 	{
 		var returnConverted = (object x) =>
 		{
@@ -42,9 +42,18 @@ static class Extensions
 		var result = Expression.Lambda(memberExpression, parameterExpression).Compile();
 		return result;
 	}
+	public static Delegate ToDelegate<T>(this Expression<Func<T, string>> rowIdentifier)
+	{
+        var memberExpressionProp = rowIdentifier.Body as MemberExpression;
+		var propertyInfo = rowIdentifier.Body is ConstantExpression uniaryExpresion is true;
 
+        //var parameterExpression = Expression.Parameter(typeof(T), "prop");
+        //var memberExpression = Expression.PropertyOrField(parameterExpression, propertyInfo.Name);
+        //var result = Expression.Lambda(memberExpression, parameterExpression).Compile();
+        return rowIdentifier.Compile();
+    }
 
-	public static void Execute(this List<Filter> filters, FieldIdentifier fieldIdentifier, object value, ValidationMessageStore store)
+    public static void Execute(this List<Filter> filters, FieldIdentifier fieldIdentifier, object value, ValidationMessageStore store)
 	{
 		foreach (var filter in filters)
 		{
@@ -58,4 +67,10 @@ static class Extensions
 
 		}
 	}
+}
+
+internal static class FieldIdentifierBuilder
+{
+    internal static FieldIdentifier With<IValue>(this FieldIdentifier field, Func<IValue> rowIdentifier, object model)
+        => rowIdentifier is null ? new(model, field.FieldName) : new(model, $"{rowIdentifier.Invoke()}.{field.FieldName}");
 }

@@ -4,8 +4,14 @@ public class ValidationBuilder<T>
 {
     List<Validator<object>> _validators = new();
     EditContext _editContext;
+    RulesBuilder<T> _rules;
+    ValidationBuilder(RulesBuilder<T> rules)
+    {
+        _rules = rules;
+        _rules.Invoke(this);
+    }
 
-    public Actions RolesFor(Expression<Func<T, object>> property)
+    public Actions RulesFor(Expression<Func<T, object>> property)
     {
 
         var memberExpression = property.Body as MemberExpression;
@@ -17,13 +23,13 @@ public class ValidationBuilder<T>
 
         if (_validators.Any(x => x.Name == propertyInfo.Name) is false)
         {
-            var validator = new PropertyValidator(propertyInfo.Name, actions.Filters, null, property.ToDelegate());
+            var validator = new PropertyValidator(propertyInfo.Name, string.Empty, actions.Filters, null, property.ToDelegate());
             _validators.Add(validator);
         }
 
         return actions;
     }
-    public Actions RolesIfFor(Expression<Func<T, bool>> ifRole, Expression<Func<T, object>> property)
+    public Actions RulesIfFor(Expression<Func<T, bool>> ifRule, Expression<Func<T, object>> property)
     {
         var memberExpression = property.Body as MemberExpression;
         var propertyInfo = memberExpression.Member as PropertyInfo;
@@ -32,14 +38,14 @@ public class ValidationBuilder<T>
 
         if (_validators.Any(x => x.Name == propertyInfo.Name) is false)
         {
-            var validator = new PropertyValidator(propertyInfo.Name, actions.Filters, ifRole.ToDelegate(), property.ToDelegate());
+            var validator = new PropertyValidator(propertyInfo.Name, string.Empty, actions.Filters, ifRule.ToDelegate(), property.ToDelegate());
             _validators.Add(validator);
         }
 
         return actions;
     }
 
-    public Actions RolesForRow<V>(Func<List<V>> list, Expression<Func<V, string>> rowIdentifier, Expression<Func<V, object>> property) where V : class
+    public Actions RulesForRow<V>(Func<List<V>> list, Expression<Func<V, string>> rowIdentifier, Expression<Func<V, object>> property) where V : class
 	{
 		var memberExpression = property.Body as MemberExpression;
 		var propertyInfo = property.Body is UnaryExpression uniaryExpresion is true
@@ -54,17 +60,16 @@ public class ValidationBuilder<T>
 		foreach (var item in items)
 		{
 			var rowIdentifierValue = rowIdentifier.Compile().Invoke(item);
-			var name = $"{rowIdentifierValue}.{propertyInfo.Name}";
 
-			if (_validators.Any(x => x.Name == name) is false)
+			if (_validators.Any(x => x.Name == propertyInfo.Name && x.Identifier == rowIdentifierValue) is false)
 			{
-				var validator = new ListValidator(name, actions.Filters, null, property.ToDelegate(), list.ToGeneric<T, V>());
+                var validator = new ListValidator(propertyInfo.Name, rowIdentifierValue, actions.Filters, null, property.ToDelegate(), list.ToDelegate<T, V>(), rowIdentifier.ToDelegate());
 				_validators.Add(validator);
 			}
 		}
         return actions;
     }
-    public Actions RolesIfForRow<V>(Func<List<V>> list, Expression<Func<V, string>> rowIdentifier, Expression<Func<V, object>> ifRole, Expression<Func<V, object>> property)
+    public Actions RulesIfForRow<V>(Func<List<V>> list, Expression<Func<V, string>> rowIdentifier, Expression<Func<V, object>> ifRule, Expression<Func<V, object>> property)
     {
 		var memberExpression = property.Body as MemberExpression;
 		var propertyInfo = property.Body is UnaryExpression uniaryExpresion is true
@@ -79,11 +84,12 @@ public class ValidationBuilder<T>
 		foreach (var item in items)
 		{
 			var rowIdentifierValue = rowIdentifier.Compile().Invoke(item);
-			var name = $"{rowIdentifierValue}.{propertyInfo.Name}";
 
-			if (_validators.Any(x => x.Name == name) is false)
-			{
-				var validator = new ListValidator(name, actions.Filters, ifRole.ToDelegate(), property.ToDelegate(), list.ToGeneric<T, V>());
+            if (_validators.Any(x => x.Name == propertyInfo.Name && x.Identifier == rowIdentifierValue) is false)
+            {
+				var validator = new ListValidator(propertyInfo.Name, rowIdentifierValue, actions.Filters, ifRule.ToDelegate(), 
+                    property.ToDelegate(), list.ToDelegate<T, V>(), rowIdentifier.ToDelegate());
+
 				_validators.Add(validator);
 			}
 		}
@@ -92,7 +98,9 @@ public class ValidationBuilder<T>
 
     public void Validate(ValidationMessageStore store, EditContext context)
     {
-        foreach(var validator in _validators)
+        _rules.Invoke(this);
+
+        foreach (var validator in _validators)
         {
             var fieldIdentifier = context.Field(validator.Name);
             store.Clear(fieldIdentifier);
@@ -103,29 +111,56 @@ public class ValidationBuilder<T>
             switch(validator)
             {
                 case PropertyValidator:
-                    var value = validator.ValueHandler.DynamicInvoke((T)context.Model);
+                    var value = validator.ValueHandler.DynamicInvoke(context.Model);
                     validator.Filters.Execute(fieldIdentifier, value, store);
                     break;
                 case ListValidator converted:
-                    var ss = converted.ListIdentifier.Compile().Invoke(context.Model);
-                    foreach (var v in ss)
+                    var rowIdentifier = context.Field($"{converted.Identifier}.{converted.Name}");
+                    store.Clear(rowIdentifier);
+                    var items = converted.ListIdentifier.Compile().Invoke(context.Model);
+                    foreach (var item in items)
                     {
-                        var rowValue = converted.ValueHandler.DynamicInvoke(v);
-						validator.Filters.Execute(fieldIdentifier, rowValue, store);
+                        var id = converted.RowIdentifier.DynamicInvoke(item);
+                        if (id.Equals(converted.Identifier) is false) continue;
+
+                        var rowValue = converted.ValueHandler.DynamicInvoke(item);
+						validator.Filters.Execute(rowIdentifier, rowValue, store);
 					}
 					break;
 			};
         }
     }
-    public void ValidateField(ValidationMessageStore store, EditContext context, FieldIdentifier fieldIdentifier)
+    public void ValidateField(ValidationMessageStore store, EditContext context, FieldChangedEventArgs @event)
     {
-        var fieldValidator = _validators.FirstOrDefault(x => x.Name.Equals(fieldIdentifier.FieldName));
-        if (fieldValidator is null) return;
+        var validator = _validators.FirstOrDefault(x => x.Name.Equals(@event.FieldIdentifier.FieldName));
+        if (validator is null) return;
 
-        store.Clear(fieldIdentifier);
-        var value = fieldValidator.ValueHandler.DynamicInvoke(context.Model);
-        fieldValidator.Filters.Execute(fieldIdentifier, value, store);
+        store.Clear(@event.FieldIdentifier);
+        switch (validator)
+        {
+            case PropertyValidator:
+                var value = validator.ValueHandler.DynamicInvoke(@event.FieldIdentifier.Model);
+                validator.Filters.Execute(@event.FieldIdentifier, value, store);
+                break;
+            case ListValidator converted:
+                var eventId = converted.RowIdentifier.DynamicInvoke(@event.FieldIdentifier.Model);
+                var rowIdentifier = context.Field($"{eventId}.{converted.Name}");
+                store.Clear(rowIdentifier);
+                var items = converted.ListIdentifier.Compile().Invoke(context.Model);
+                foreach (var item in items)
+                {
+                    var id = converted.RowIdentifier.DynamicInvoke(item);
+                    if (id.Equals(eventId) is false) continue;
+
+                    var rowValue = converted.ValueHandler.DynamicInvoke(item);
+                    validator.Filters.Execute(rowIdentifier, rowValue, store);
+                }
+                break;
+        };
     }
+
+
+    public static ValidationBuilder<T> Create(RulesBuilder<T> rules) => new ValidationBuilder<T>(rules);
 }
 
 

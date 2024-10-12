@@ -22,13 +22,13 @@ public class Actions
         return AddValidator(x =>
         {
             if (x.Value is Guid && (Guid)x.Value == Guid.Empty) 
-                return new(string.Empty, $"\"{x.Name}\" can't have defatul value.");
+                return new(string.Empty, $"This field can't have defatul value.");
 
             if (x.Value is string str && string.IsNullOrWhiteSpace(str)) 
-                return new(string.Empty, $"The value for field \"{x.Name}\" can't be null or whitespace.");
+                return new(string.Empty, $"The value for this field can't be null or whitespace.");
 
             if (x.Value is null) 
-                return new(string.Empty, $"The value for field \"{x.Name}\" can't be null or whitesapce");
+                return new(string.Empty, $"The value for this field can't be null or whitesapce");
 
             return default;
         });
