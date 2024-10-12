@@ -51,7 +51,7 @@
         builder.RolesFor(x => x.Number).AddValidators(_items.Exists).NotNullOrWhiteSpace();
         builder.RolesFor(x => x.MiddleName).NotNull();
         builder.RolesIfFor(x => x.IsSelected, prop => prop.Comment).NotNullOrWhiteSpace();
-        builder.RolesForRow(() => _model.List, x => x.Id, prop => prop.InnerName).NotNullOrWhiteSpace();
+        builder.RolesForRow(() => _model.List, x => x.Id.ToString(), prop => prop.InnerName).NotNullOrWhiteSpace();
     };
 
     void submite()

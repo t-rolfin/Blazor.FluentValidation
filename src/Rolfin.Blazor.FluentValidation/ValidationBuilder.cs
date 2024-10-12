@@ -1,7 +1,5 @@
 ﻿namespace Rolfin.Blazor.FluentValidation;
 
-delegate object Convert(object obj);
-
 public class ValidationBuilder<T>
 {
     List<Validator<object>> _validators = new();
@@ -41,32 +39,56 @@ public class ValidationBuilder<T>
         return actions;
     }
 
-    public Actions RolesForRow<V>(Func<List<V>> listIdentifier, Expression<Func<V, object>> rowIdentifier, Expression<Func<V, object>> property) where V : class
+    public Actions RolesForRow<V>(Func<List<V>> list, Expression<Func<V, string>> rowIdentifier, Expression<Func<V, object>> property) where V : class
 	{
 		var memberExpression = property.Body as MemberExpression;
 		var propertyInfo = property.Body is UnaryExpression uniaryExpresion is true
 			? (uniaryExpresion.Operand as MemberExpression).Member as PropertyInfo
 			: memberExpression.Member as PropertyInfo;
 
-
-		var list = listIdentifier.Invoke();
+		var items = list.Invoke();
 		var actions = new Actions();
 
-		if (list.Count <= 0) return actions;
+		if (items.Count <= 0) return actions;
 
-		foreach (var item in list)
+		foreach (var item in items)
 		{
 			var rowIdentifierValue = rowIdentifier.Compile().Invoke(item);
 			var name = $"{rowIdentifierValue}.{propertyInfo.Name}";
 
 			if (_validators.Any(x => x.Name == name) is false)
 			{
-				var validator = new ListValidator(name, actions.Filters, null, property.ToDelegate(), listIdentifier.ToGeneric<T, V>());
+				var validator = new ListValidator(name, actions.Filters, null, property.ToDelegate(), list.ToGeneric<T, V>());
 				_validators.Add(validator);
 			}
 		}
         return actions;
     }
+    public Actions RolesIfForRow<V>(Func<List<V>> list, Expression<Func<V, string>> rowIdentifier, Expression<Func<V, object>> ifRole, Expression<Func<V, object>> property)
+    {
+		var memberExpression = property.Body as MemberExpression;
+		var propertyInfo = property.Body is UnaryExpression uniaryExpresion is true
+			? (uniaryExpresion.Operand as MemberExpression).Member as PropertyInfo
+			: memberExpression.Member as PropertyInfo;
+
+		var items = list.Invoke();
+		var actions = new Actions();
+
+		if (items.Count <= 0) return actions;
+
+		foreach (var item in items)
+		{
+			var rowIdentifierValue = rowIdentifier.Compile().Invoke(item);
+			var name = $"{rowIdentifierValue}.{propertyInfo.Name}";
+
+			if (_validators.Any(x => x.Name == name) is false)
+			{
+				var validator = new ListValidator(name, actions.Filters, ifRole.ToDelegate(), property.ToDelegate(), list.ToGeneric<T, V>());
+				_validators.Add(validator);
+			}
+		}
+		return actions;
+	}
 
     public void Validate(ValidationMessageStore store, EditContext context)
     {
