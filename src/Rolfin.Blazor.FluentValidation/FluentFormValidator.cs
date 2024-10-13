@@ -60,7 +60,11 @@ public class FluentFormValidator<TModel> : ComponentBase, IDisposable
     }
 
 
-    public void Validate() => _builder.Validate(_store, CurrentContext);
+    public bool Validate()
+    {
+        _builder.Validate(_store, CurrentContext);
+        return CurrentContext.GetValidationMessages().Any() is false;
+    }
 
 
     protected virtual void Dispose(bool disposing)

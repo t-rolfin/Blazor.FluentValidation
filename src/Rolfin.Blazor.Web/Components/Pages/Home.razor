@@ -77,7 +77,7 @@
     }
     void changeAndValidationRules()
     {
-        _validator?.ChangeRules(builder =>
+        var isValid = _validator?.ChangeRules(builder =>
        {
            builder.RulesFor(x => x.Number).AddValidators(_items.Exists);
            builder.RulesFor(x => x.MiddleName).NotNull();
