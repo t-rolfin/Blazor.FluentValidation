@@ -1,4 +1,6 @@
-﻿namespace Rolfin.Blazor.FluentValidation;
+﻿using System.Reflection;
+
+namespace Rolfin.Blazor.FluentValidation;
 
 public class FluentFormValidator<TModel> : ComponentBase, IDisposable
 {
@@ -38,11 +40,13 @@ public class FluentFormValidator<TModel> : ComponentBase, IDisposable
     void ValidationRequestedMethod(object sender, ValidationRequestedEventArgs e) => _builder.Validate(_store, (EditContext)sender);
 
 
-    public void ChangeRules(RulesBuilder<TModel> rules)
+    public FluentFormValidator<TModel> ChangeRules(RulesBuilder<TModel> rules)
     {
         _store.Clear();
         _rules = rules;
         _builder = ValidationBuilder<TModel>.Create(rules);
+
+        return this;
     }
     public void AddErroFor(string fieldName, string ErrorMessage)
     {
@@ -54,6 +58,9 @@ public class FluentFormValidator<TModel> : ComponentBase, IDisposable
         var fieldIdentitifier = CurrentContext.Field(fieldName);
         _store.Clear(fieldIdentitifier);
     }
+
+
+    public void Validate() => _builder.Validate(_store, CurrentContext);
 
 
     protected virtual void Dispose(bool disposing)

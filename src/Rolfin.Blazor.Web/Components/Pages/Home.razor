@@ -7,6 +7,7 @@
 <PageTitle>Home</PageTitle>
 
 <button @onclick="changeValidationRules" > Change </button>
+<button @onclick="changeAndValidationRules" > Change & Validate </button>
 <button @onclick="addRow" > Add Row </button>
 
 <EditForm FormName="formName" Model="_model" OnValidSubmit="submite">
@@ -74,6 +75,16 @@
             builder.RulesIfFor(x => x.IsSelected, prop => prop.Comment).NotNullOrWhiteSpace();
         });
     }
+    void changeAndValidationRules()
+    {
+        _validator?.ChangeRules(builder =>
+       {
+           builder.RulesFor(x => x.Number).AddValidators(_items.Exists);
+           builder.RulesFor(x => x.MiddleName).NotNull();
+           builder.RulesIfFor(x => x.IsSelected, prop => prop.Comment).NotNullOrWhiteSpace();
+       }).Validate();
+    }
+
     void addRow()
     {
         _model.List.Add(new() { Id = Guid.NewGuid() });

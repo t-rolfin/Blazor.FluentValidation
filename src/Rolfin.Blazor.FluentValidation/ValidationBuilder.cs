@@ -5,11 +5,14 @@ public class ValidationBuilder<T>
     List<Validator<object>> _validators = new();
     EditContext _editContext;
     RulesBuilder<T> _rules;
+
+
     ValidationBuilder(RulesBuilder<T> rules)
     {
         _rules = rules;
         _rules.Invoke(this);
     }
+
 
     public Actions RulesFor(Expression<Func<T, object>> property)
     {
@@ -44,6 +47,7 @@ public class ValidationBuilder<T>
 
         return actions;
     }
+
 
     public Actions RulesForRow<V>(Func<List<V>> list, Expression<Func<V, string>> rowIdentifier, Expression<Func<V, object>> property) where V : class
 	{
@@ -95,6 +99,7 @@ public class ValidationBuilder<T>
 		}
 		return actions;
 	}
+
 
     public void Validate(ValidationMessageStore store, EditContext context)
     {
