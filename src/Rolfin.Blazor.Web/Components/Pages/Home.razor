@@ -9,6 +9,7 @@
 <button @onclick="changeValidationRules" > Change </button>
 <button @onclick="changeAndValidationRules" > Change & Validate </button>
 <button @onclick="addRow" > Add Row </button>
+<button @onclick="addError" > Add Error </button>
 
 <EditForm FormName="formName" Model="_model" OnValidSubmit="submite">
 
@@ -62,8 +63,15 @@
         builder.RulesForRow(() => _model.List, x => x.Id.ToString(), prop => prop.InnerName).NotNullOrWhiteSpace();
     };
 
+    void addError()
+    {
+    }
+
     void submite()
     {
+        _validator?.AddRule(x => x.MiddleName, true).NotNullOrWhiteSpace();
+        _validator?.AddRule(x => x.Comment).NotNullOrWhiteSpace();
+        if (_validator?.Validate() is false) return;
     }
 
     void changeValidationRules()
@@ -72,7 +80,6 @@
         {
             builder.RulesFor(x => x.Number).AddValidators(_items.Exists);
             builder.RulesFor(x => x.MiddleName).NotNull();
-            builder.RulesIfFor(x => x.IsSelected, prop => prop.Comment).NotNullOrWhiteSpace();
         });
     }
     void changeAndValidationRules()
@@ -81,7 +88,6 @@
        {
            builder.RulesFor(x => x.Number).AddValidators(_items.Exists);
            builder.RulesFor(x => x.MiddleName).NotNull();
-           builder.RulesIfFor(x => x.IsSelected, prop => prop.Comment).NotNullOrWhiteSpace();
        }).Validate();
     }
 
