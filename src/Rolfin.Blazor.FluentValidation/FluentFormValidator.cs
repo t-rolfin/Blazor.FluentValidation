@@ -57,7 +57,7 @@ public class FluentFormValidator<TModel> : ComponentBase, IDisposable
         _suppressValidationRequested = true;
         return _builder.AddRule(property, removeIfRule);
 	}
-    public void AddErroFor(string fieldName, string ErrorMessage)
+    public void AddErrorFor(string fieldName, string ErrorMessage)
     {
         var fieldIdentitifier = CurrentContext.Field(fieldName);
         _store.Add(fieldIdentitifier, ErrorMessage);
