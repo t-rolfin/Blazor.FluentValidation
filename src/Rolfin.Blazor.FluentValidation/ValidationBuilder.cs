@@ -13,6 +13,32 @@ public class ValidationBuilder<T>
         _rules.Invoke(this);
     }
 
+    internal Actions AddRule(Expression<Func<T, object>> property, bool removeIfRule)
+    {
+        var memberExpression = property.Body as MemberExpression;
+        var propertyInfo = property.Body is UnaryExpression uniaryExpresion is true
+            ? (uniaryExpresion.Operand as MemberExpression).Member as PropertyInfo
+            : memberExpression.Member as PropertyInfo;
+
+        var actions = new Actions();
+
+        if (_validators.Any(x => x.Name == propertyInfo.Name) is false)
+        {
+            var validator = new PropertyValidator(propertyInfo.Name, string.Empty, actions.Filters, null, property.ToDelegate());
+            _validators.Add(validator);
+        }
+        else
+        {
+            var validator = _validators.FirstOrDefault(x => x.Name.Equals(propertyInfo.Name));
+            _validators.Remove(validator);
+            actions.Filters = validator.Filters;
+
+            if (validator.If is not null) validator = validator with { If = null };
+            _validators.Add(validator);
+        }
+
+        return actions;
+    }
 
     public Actions RulesFor(Expression<Func<T, object>> property)
     {
@@ -139,6 +165,9 @@ public class ValidationBuilder<T>
     {
         var validator = _validators.FirstOrDefault(x => x.Name.Equals(@event.FieldIdentifier.FieldName));
         if (validator is null) return;
+
+        if (validator.If is not null && validator.If.DynamicInvoke(context.Model) is false) return;
+        if (validator.Filters.Any() is false) return;
 
         store.Clear(@event.FieldIdentifier);
         switch (validator)

@@ -7,14 +7,15 @@ public class Actions
 
     public Actions AddValidators(params Filter[] validators)
     {
-        for(var i = 0; i <= validators.Length - 1; i++)
-            Filters.Add(validators[i]);
+        for (var i = 0; i <= validators.Length - 1; i++)
+            if (Filters.Any(x => x == validators[i]) is false)
+                Filters.Add(validators[i]);
 
         return this;
     }
     public Actions AddValidator(Filter validator)
     {
-        Filters.Add(validator);
+        if(Filters.Any(x => x == validator) is false) Filters.Add(validator);
         return this;
     }
     public Actions NotNullOrWhiteSpace()
