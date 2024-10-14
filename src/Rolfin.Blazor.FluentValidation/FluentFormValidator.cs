@@ -5,7 +5,9 @@ public class FluentFormValidator<TModel> : ComponentBase, IDisposable
     ValidationMessageStore _store;
     ValidationBuilder<TModel> _builder;
     RulesBuilder<TModel> _rules;
+    bool _suppressValidationRequested = false;
     private EditContext _previousEditContext;
+
 
     [CascadingParameter]
     public EditContext CurrentContext { get; set; }
@@ -35,7 +37,11 @@ public class FluentFormValidator<TModel> : ComponentBase, IDisposable
 
 
     void FieldChengedMethod(object sender, FieldChangedEventArgs e) => _builder.ValidateField(_store, (EditContext)sender, e);
-    void ValidationRequestedMethod(object sender, ValidationRequestedEventArgs e) => _builder.Validate(_store, (EditContext)sender);
+    void ValidationRequestedMethod(object sender, ValidationRequestedEventArgs e)
+    {
+        if(_suppressValidationRequested) return;
+		_builder.Validate(_store, (EditContext)sender);
+	}
 
 
 	public FluentFormValidator<TModel> ChangeRules(RulesBuilder<TModel> rules)
@@ -46,7 +52,11 @@ public class FluentFormValidator<TModel> : ComponentBase, IDisposable
 
         return this;
     }
-    public Actions AddRule(Expression<Func<TModel, object>> property, bool removeIfRule = false) => _builder.AddRule(property, removeIfRule);
+    public Actions AddRule(Expression<Func<TModel, object>> property, bool removeIfRule = false)
+    {
+        _suppressValidationRequested = true;
+        return _builder.AddRule(property, removeIfRule);
+	}
     public void AddErroFor(string fieldName, string ErrorMessage)
     {
         var fieldIdentitifier = CurrentContext.Field(fieldName);
