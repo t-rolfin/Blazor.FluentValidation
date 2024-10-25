@@ -53,6 +53,8 @@ public static class ValidatorDefaults
 {
     public static ValidationError Exists(this IList items, Field field)
     {
+        if (items is null) return default;
+
         foreach (var item in items)
         {
             var property = item.GetType().GetProperty(field.Name);
