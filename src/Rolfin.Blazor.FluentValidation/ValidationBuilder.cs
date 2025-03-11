@@ -136,7 +136,6 @@ public class ValidationBuilder<T>
             var fieldIdentifier = context.Field(validator.Name);
             store.Clear(fieldIdentifier);
 
-            if (validator.If is not null && validator.If.DynamicInvoke(context.Model) is false) continue;
             if (validator.Filters.Any() is false) continue;
 
             switch(validator)
@@ -151,6 +150,8 @@ public class ValidationBuilder<T>
                     var items = converted.ListIdentifier.Compile().Invoke(context.Model);
                     foreach (var item in items)
                     {
+                        if (validator.If is not null && validator.If.DynamicInvoke(item) is false) continue;
+
                         var id = converted.RowIdentifier.DynamicInvoke(item);
                         if (id.Equals(converted.Identifier) is false) continue;
 
@@ -166,7 +167,6 @@ public class ValidationBuilder<T>
         var validator = _validators.FirstOrDefault(x => x.Name.Equals(@event.FieldIdentifier.FieldName));
         if (validator is null) return;
 
-        if (validator.If is not null && validator.If.DynamicInvoke(context.Model) is false) return;
         if (validator.Filters.Any() is false) return;
 
         store.Clear(@event.FieldIdentifier);
@@ -183,6 +183,8 @@ public class ValidationBuilder<T>
                 var items = converted.ListIdentifier.Compile().Invoke(context.Model);
                 foreach (var item in items)
                 {
+                    if (validator.If is not null && validator.If.DynamicInvoke(item) is false) continue;
+
                     var id = converted.RowIdentifier.DynamicInvoke(item);
                     if (id.Equals(eventId) is false) continue;
 
