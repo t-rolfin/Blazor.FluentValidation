@@ -60,7 +60,7 @@
         builder.RulesFor(x => x.Number).AddValidators(_items.Exists).NotNullOrWhiteSpace();
         builder.RulesFor(x => x.MiddleName).NotNull();
         builder.RulesIfFor(x => x.IsSelected, prop => prop.Comment).NotNullOrWhiteSpace();
-        builder.RulesForRow(() => _model.List, x => x.Id.ToString(), prop => prop.InnerName).NotNullOrWhiteSpace();
+        builder.RulesIfForRow(() => _model.List, x => x.Id.ToString(), x => x.HasMore, prop => prop.InnerName).NotNullOrWhiteSpace();
     };
 
     void addError()
@@ -93,7 +93,7 @@
 
     void addRow()
     {
-        _model.List.Add(new() { Id = Guid.NewGuid() });
+        _model.List.Add(new() { Id = Guid.NewGuid(), HasMore = true });
     }
 
     class Model
@@ -107,7 +107,7 @@
         public int Number { get; set; }
 
         public List<InnerModel> List { get; set; } = new() { 
-            new() { Id = Guid.NewGuid(), InnerName = "florin" },
+            new() { Id = Guid.NewGuid(), InnerName = "florin", HasMore = true },
             new() { Id = Guid.NewGuid(), InnerName = "" },
             new() { Id = Guid.NewGuid(), InnerName = "" },
         };
@@ -117,5 +117,6 @@
     {
         public Guid Id { get; set; }
         public string InnerName { get; set; }
+        public bool HasMore { get; set; }
     }
 }
