@@ -10,12 +10,14 @@
 <button @onclick="changeAndValidationRules" > Change & Validate </button>
 <button @onclick="addRow" > Add Row </button>
 <button @onclick="addError" > Add Error </button>
+<button @onclick="addValidations" > Add Validations </button>
+<button @onclick="joinRuels" > Join Rules </button>
 
 <EditForm FormName="formName" Model="_model" OnValidSubmit="submite">
 
     <div style="display: flex; flex-direction: column; width: 50%; min-height: 300px; margin: auto;">
 
-        <FluentFormValidator Rules="rules" @ref=_validator />
+        <FluentFormValidator @ref=_validator TModel="Model" />
 
         <InputText @bind-Value=_model.Name />
         <FluentValidationMessage For="() => _model.Name" />
@@ -54,24 +56,32 @@
 
     FluentFormValidator<Model>? _validator { get; set; }
 
-    RulesBuilder<Model> rules => (builder) =>
-    {
-        builder.RulesFor(x => x.Name).AddValidators(_items.Exists).NotNullOrWhiteSpace();
-        builder.RulesFor(x => x.Number).AddValidators(_items.Exists).NotNullOrWhiteSpace();
-        builder.RulesFor(x => x.MiddleName).NotNull();
-        builder.RulesIfFor(x => x.IsSelected, prop => prop.Comment).NotNullOrWhiteSpace();
-        builder.RulesIfForRow(() => _model.List, x => x.Id.ToString(), x => x.HasMore, prop => prop.InnerName).NotNullOrWhiteSpace();
-    };
-
     void addError()
     {
     }
 
+    void addValidations() {
+        _validator?.ChangeRules((builder) =>
+        {
+            builder.RulesFor(x => x.Name).AddValidators(_items.Exists).NotNullOrWhiteSpace();
+            builder.RulesFor(x => x.Number).AddValidators(_items.Exists).NotNullOrWhiteSpace();
+            builder.RulesFor(x => x.MiddleName).NotNull();
+            builder.RulesIfFor(x => x.IsSelected, prop => prop.Comment).NotNullOrWhiteSpace();
+        });
+    }
+
     void submite()
     {
-        _validator?.AddRule(x => x.MiddleName, true).NotNullOrWhiteSpace();
-        _validator?.AddRule(x => x.Comment).NotNullOrWhiteSpace();
-        if (_validator?.Validate() is false) return;
+        // _validator?.AddRule(x => x.MiddleName, true).NotNullOrWhiteSpace();
+        // _validator?.AddRule(x => x.Comment).NotNullOrWhiteSpace();
+        // if (_validator?.Validate() is false) return;
+    }
+
+    void joinRuels(){
+        _validator?.AddRules(builder =>
+        {
+            builder.RulesIfForRow(() => _model.List, x => x.Id.ToString(), x => x.HasMore == true, prop => prop.InnerName).NotNullOrWhiteSpace();
+        });
     }
 
     void changeValidationRules()
@@ -107,7 +117,7 @@
         public int Number { get; set; }
 
         public List<InnerModel> List { get; set; } = new() { 
-            new() { Id = Guid.NewGuid(), InnerName = "florin", HasMore = true },
+            new() { Id = Guid.NewGuid(), InnerName = "florin" },
             new() { Id = Guid.NewGuid(), InnerName = "" },
             new() { Id = Guid.NewGuid(), InnerName = "" },
         };
