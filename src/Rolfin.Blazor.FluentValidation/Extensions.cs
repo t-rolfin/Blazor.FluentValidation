@@ -18,41 +18,6 @@ static class Extensions
 
 		return res;
 	}
-	public static Delegate ToDelegate<T>(this Expression<Func<T, object>> property)
-	{
-		var memberExpressionProp = property.Body as MemberExpression;
-		var propertyInfo = property.Body is UnaryExpression uniaryExpresion is true
-			? (uniaryExpresion.Operand as MemberExpression).Member as PropertyInfo
-			: memberExpressionProp.Member as PropertyInfo;
-
-		var parameterExpression = Expression.Parameter(typeof(T), "prop");
-		var memberExpression = Expression.PropertyOrField(parameterExpression, propertyInfo.Name);
-		var result = Expression.Lambda(memberExpression, parameterExpression).Compile();
-		return result;
-	}
-	public static Delegate ToDelegate<T>(this Expression<Func<T, bool>> property)
-	{
-		var memberExpressionProp = property.Body as MemberExpression;
-		var propertyInfo = property.Body is UnaryExpression uniaryExpresion is true
-			? (uniaryExpresion.Operand as MemberExpression).Member as PropertyInfo
-			: memberExpressionProp.Member as PropertyInfo;
-
-		var parameterExpression = Expression.Parameter(typeof(T), "prop");
-		var memberExpression = Expression.PropertyOrField(parameterExpression, propertyInfo.Name);
-		var result = Expression.Lambda(memberExpression, parameterExpression).Compile();
-		return result;
-	}
-	public static Delegate ToDelegate<T>(this Expression<Func<T, string>> rowIdentifier)
-	{
-        var memberExpressionProp = rowIdentifier.Body as MemberExpression;
-		var propertyInfo = rowIdentifier.Body is ConstantExpression uniaryExpresion is true;
-
-        //var parameterExpression = Expression.Parameter(typeof(T), "prop");
-        //var memberExpression = Expression.PropertyOrField(parameterExpression, propertyInfo.Name);
-        //var result = Expression.Lambda(memberExpression, parameterExpression).Compile();
-        return rowIdentifier.Compile();
-    }
-
     public static void Execute(this List<Filter> filters, FieldIdentifier fieldIdentifier, object value, ValidationMessageStore store)
 	{
 		foreach (var filter in filters)

@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components.Rendering;
-using System.Reflection;
+
 
 namespace Rolfin.Blazor.FluentValidation;
+
 
 public class FluentValidationMessage<TValue> : ComponentBase, IDisposable
 {
@@ -24,7 +25,7 @@ public class FluentValidationMessage<TValue> : ComponentBase, IDisposable
     public Expression<Func<TValue>> For { get; set; }
 
     [Parameter]
-    public Func<string>? RowIdentifier { get; set; }
+    public Func<string> RowIdentifier { get; set; }
 
 
     public FluentValidationMessage()

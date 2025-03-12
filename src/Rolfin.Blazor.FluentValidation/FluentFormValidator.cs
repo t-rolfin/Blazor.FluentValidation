@@ -1,17 +1,18 @@
 ﻿namespace Rolfin.Blazor.FluentValidation;
 
+
 public class FluentFormValidator<TModel> : ComponentBase, IDisposable
 {
-    ValidationMessageStore _store;
-    ValidationBuilder<TModel> _builder;
-    RulesBuilder<TModel> _rules;
     bool _suppressValidationRequested = false;
-    private EditContext _previousEditContext;
 
 
-    [CascadingParameter]
-    public EditContext CurrentContext { get; set; }
+    RulesBuilder<TModel> _rules = (builder) => { };
+    ValidationBuilder<TModel> _builder;
+    EditContext _previousEditContext;
+    ValidationMessageStore _store;
 
+
+    [CascadingParameter]  EditContext CurrentContext { get; set; }
     [Parameter] public RulesBuilder<TModel> Rules { get => _rules; set => _rules = value; }
 
 
@@ -36,10 +37,15 @@ public class FluentFormValidator<TModel> : ComponentBase, IDisposable
     }
 
 
-    void FieldChengedMethod(object sender, FieldChangedEventArgs e) => _builder.ValidateField(_store, (EditContext)sender, e);
+    void FieldChengedMethod(object sender, FieldChangedEventArgs e) 
+    {
+        if (_builder is null) throw new ArgumentNullException("Validation rules aren't set.");
+        _builder.ValidateField(_store, (EditContext)sender, e);
+    } 
     void ValidationRequestedMethod(object sender, ValidationRequestedEventArgs e)
     {
-        if(_suppressValidationRequested)
+        if (_builder is null) throw new ArgumentNullException("Validation rules aren't set.");
+        if (_suppressValidationRequested)
         {
 			_store.Clear();
             return;
@@ -48,6 +54,9 @@ public class FluentFormValidator<TModel> : ComponentBase, IDisposable
 	}
 
 
+    /// <summary>
+    /// Replace current rules.
+    /// </summary>
 	public FluentFormValidator<TModel> ChangeRules(RulesBuilder<TModel> rules)
     {
         _store.Clear();
@@ -56,8 +65,20 @@ public class FluentFormValidator<TModel> : ComponentBase, IDisposable
 
         return this;
     }
+
+    /// <summary>
+    /// Adds new rules to existing ones.
+    /// </summary>
+    public FluentFormValidator<TModel> AddRules(RulesBuilder<TModel> rules)
+    {
+        var secBuilder = ValidationBuilder<TModel>.Create(rules);
+        _builder.Join(secBuilder);
+        return this;
+    }
     public Actions AddRule(Expression<Func<TModel, object>> property, bool removeIfRule = false)
     {
+        if (_builder is null) throw new ArgumentNullException("Validation rules aren't set.");
+
         _suppressValidationRequested = true;
         return _builder.AddRule(property, removeIfRule);
 	}
@@ -83,6 +104,7 @@ public class FluentFormValidator<TModel> : ComponentBase, IDisposable
     protected virtual void Dispose(bool disposing)
     {
     }
+
 
     void IDisposable.Dispose()
     {
